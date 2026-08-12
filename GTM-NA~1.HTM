@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTM Navigation – Health</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg2:#fff3e6;
+    --accent:#ff6a13;
+    --accent2:#ff9a4d;
+    --text:#221a12;
+    --muted:#7a6f65;
+    --card:rgba(255,106,19,0.045);
+    --card-border:rgba(20,15,10,0.1);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+  }
+  a{color:var(--accent);text-decoration:none;}
+  #bgCanvas{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    z-index:0;
+    pointer-events:none;
+    opacity:0.4;
+  }
+  .page-gradient{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:radial-gradient(ellipse at 20% -10%, rgba(255,154,77,0.22), transparent 55%),
+               radial-gradient(ellipse at 90% 10%, rgba(255,106,19,0.14), transparent 50%),
+               linear-gradient(180deg, var(--bg) 0%, var(--bg2) 45%, var(--bg) 100%);
+    z-index:-1;
+  }
+  .wrap{position:relative;z-index:1;}
+
+  /* NAVBAR */
+  nav.topbar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 32px;
+    background:rgba(255,255,255,0.8);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--card-border);
+  }
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.3px;font-size:16px;line-height:1.4;overflow:visible;}
+  .brand .elsevier-logo{
+    font-family:Georgia,'Times New Roman',serif;
+    font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--accent);
+  }
+  .brand .brand-sep{width:1px;height:20px;background:var(--card-border);}
+  .navlinks{display:flex;gap:26px;font-size:14px;color:var(--muted);}
+  .navlinks a{color:var(--muted);}
+  .navlinks a:hover{color:var(--text);}
+  .admin-btn{
+    display:flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--card-border);
+    color:var(--text);padding:8px 14px;border-radius:999px;
+    font-size:13px;cursor:pointer;transition:.2s;
+  }
+  .admin-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* HERO */
+  .hero{
+    padding:110px 32px 90px;
+    text-align:center;
+    max-width:900px;margin:0 auto;
+  }
+  .eyebrow{
+    display:inline-block;padding:6px 14px;border-radius:999px;
+    border:1px solid var(--card-border);background:var(--card);
+    font-size:12px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:22px;
+  }
+  .hero h1{
+    font-size:clamp(34px,6vw,60px);
+    margin:0 0 18px;padding:0.12em 0.02em 0.08em;line-height:1.25;font-weight:800;
+    background:linear-gradient(135deg,#2a1d0f,var(--accent) 60%,var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    overflow:visible;
+  }
+  .hero p.sub{font-size:18px;color:var(--muted);max-width:680px;margin:0 auto 34px;line-height:1.6;}
+  .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .btn{
+    padding:13px 26px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+    border:1px solid transparent;transition:.2s;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+  .btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+  .btn-ghost{background:var(--card);border:1px solid var(--card-border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+  .stats{
+    display:flex;justify-content:center;gap:40px;margin-top:56px;flex-wrap:wrap;
+  }
+  .stat{text-align:center;}
+  .stat .num{font-size:30px;font-weight:800;color:var(--accent);}
+  .stat .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+  section{padding:80px 32px;max-width:1180px;margin:0 auto;}
+  .section-head{text-align:center;max-width:680px;margin:0 auto 50px;}
+  .section-head .tag{color:var(--accent);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;}
+  .section-head h2{font-size:clamp(26px,4vw,38px);margin:10px 0 12px;}
+  .section-head p{color:var(--muted);font-size:15px;line-height:1.6;}
+
+  /* WHAT/WHO */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr;}}
+  .infocard{
+    background:linear-gradient(160deg,#fff,#fffaf5);border:1px solid var(--card-border);border-radius:18px;
+    padding:32px;box-shadow:0 8px 24px -14px rgba(20,15,10,0.15);
+    transition:transform .35s ease, border-color .35s ease, box-shadow .35s ease;
+  }
+  .infocard:hover{transform:translateY(-4px);border-color:rgba(255,106,19,0.4);box-shadow:0 14px 30px -12px rgba(255,106,19,0.25);}
+  .infocard .icon{
+    width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(255,106,19,.16),rgba(255,154,77,.16));
+    font-size:22px;margin-bottom:18px;
+  }
+  .infocard h3{margin:0 0 10px;font-size:19px;}
+  .infocard p{color:var(--muted);line-height:1.7;font-size:15px;margin:0;}
+
+  /* CAROUSEL */
+  .carousel-wrap{position:relative;margin-top:20px;}
+  .carousel-stage{
+    height:400px;perspective:1400px;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    touch-action:pan-y;
+    user-select:none;
+  }
+  .carousel-ring{
+    position:relative;width:280px;height:320px;
+    transform-style:preserve-3d;
+    transition:transform .6s cubic-bezier(.22,.9,.24,1);
+    margin:0 auto;
+  }
+  .step-card{
+    position:absolute;top:0;left:0;width:280px;height:320px;
+    background:linear-gradient(160deg,#fff,#fff6ec);
+    border:1px solid var(--card-border);
+    border-radius:20px;padding:26px 22px;
+    box-shadow:0 8px 24px -14px rgba(20,15,10,0.18);
+    backface-visibility:hidden;
+    opacity:.28;transform:scale(.82);
+    transition:opacity .5s, transform .5s, border-color .5s, box-shadow .5s;
+    cursor:pointer;
+  }
+  .step-card.active{
+    opacity:1;border-color:rgba(255,106,19,0.55);
+    box-shadow:0 20px 50px -12px rgba(255,106,19,0.35);
+  }
+  .step-card .num{
+    font-size:12px;color:var(--accent);letter-spacing:2px;font-weight:700;text-transform:uppercase;
+  }
+  .step-card .icon{font-size:30px;margin:14px 0 12px;}
+  .step-card h4{margin:0 0 10px;font-size:18px;}
+  .step-card p{color:var(--muted);font-size:13.5px;line-height:1.6;margin:0;}
+
+  .car-controls{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:26px;}
+  .car-btn{
+    width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);
+    color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.2s;
+  }
+  .car-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .car-dots{display:flex;gap:8px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--card-border);cursor:pointer;transition:.2s;}
+  .dot.active{background:var(--accent);width:22px;border-radius:5px;}
+
+  /* TAT TABLE */
+  .tat-card{
+    background:#fff;border:1px solid var(--card-border);border-radius:18px;
+    padding:10px;overflow:hidden;margin-top:10px;box-shadow:0 8px 24px -14px rgba(20,15,10,0.15);
+  }
+  table.tat{width:100%;border-collapse:collapse;}
+  table.tat th, table.tat td{padding:16px 20px;text-align:left;font-size:14.5px;}
+  table.tat th{color:var(--accent);text-transform:uppercase;font-size:11.5px;letter-spacing:1px;border-bottom:1px solid var(--card-border);}
+  table.tat tr:not(:last-child) td{border-bottom:1px solid rgba(20,15,10,0.06);}
+  table.tat td.time{color:var(--text);font-weight:600;}
+  table.tat td.time span{background:rgba(255,106,19,0.12);color:var(--accent);padding:4px 10px;border-radius:999px;font-size:12.5px;}
+
+  /* LINKS */
+  .links-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+  @media(max-width:760px){.links-grid{grid-template-columns:1fr;}}
+  .link-card{
+    display:block;background:linear-gradient(160deg,#fff,#fffaf5);border:1px solid var(--card-border);border-radius:16px;
+    padding:24px;transition:transform .12s ease, border-color .3s, box-shadow .3s;
+    box-shadow:0 8px 24px -14px rgba(20,15,10,0.15);
+    transform-style:preserve-3d;will-change:transform;
+  }
+  .link-card:hover{border-color:rgba(255,106,19,0.5);box-shadow:0 14px 30px -12px rgba(255,106,19,0.25);}
+  .link-card .row{display:flex;align-items:flex-start;gap:14px;}
+  .link-card .emoji{font-size:24px;}
+  .link-card h4{margin:0 0 6px;font-size:16px;color:var(--text);}
+  .link-card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5;}
+  .link-card .arrow{margin-left:auto;color:var(--muted);}
+
+  footer{
+    text-align:center;padding:50px 32px 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--card-border);margin-top:40px;
+  }
+  footer a{color:var(--muted);}
+  footer a:hover{color:var(--accent);}
+
+  /* ADMIN PANEL */
+  .gear-fab{
+    position:fixed;bottom:26px;right:26px;z-index:200;
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;
+    box-shadow:0 8px 24px rgba(255,106,19,0.35);border:none;color:#fff;
+    transition:transform .2s;
+  }
+  .gear-fab:hover{transform:scale(1.08) rotate(30deg);}
+
+  .admin-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;
+    display:none;
+  }
+  .admin-overlay.open{display:block;}
+  .admin-panel{
+    position:fixed;top:0;right:0;height:100%;width:min(480px,92vw);
+    background:#fffdfb;border-left:1px solid var(--card-border);
+    z-index:301;transform:translateX(100%);transition:transform .35s ease;
+    overflow-y:auto;padding:26px 24px 100px;
+    box-shadow:-10px 0 40px rgba(20,15,10,0.12);
+  }
+  .admin-panel.open{transform:translateX(0);}
+  .admin-panel h2{margin:0 0 4px;font-size:20px;}
+  .admin-panel .desc{color:var(--muted);font-size:12.5px;margin-bottom:22px;}
+  .admin-close{position:absolute;top:22px;right:22px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+  .admin-section{margin-bottom:28px;border-top:1px solid var(--card-border);padding-top:20px;}
+  .admin-section:first-of-type{border-top:none;padding-top:0;}
+  .admin-section > label.title{display:block;font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .field input, .field textarea{
+    width:100%;padding:9px 11px;border-radius:8px;background:rgba(20,15,10,0.035);
+    border:1px solid var(--card-border);color:var(--text);font-size:13.5px;font-family:inherit;resize:vertical;
+  }
+  .field input:focus, .field textarea:focus{outline:none;border-color:var(--accent);}
+  .list-item{
+    background:rgba(20,15,10,0.02);border:1px solid var(--card-border);border-radius:10px;
+    padding:12px;margin-bottom:10px;position:relative;
+  }
+  .list-item .rm{
+    position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;
+  }
+  .list-item .rm:hover{color:#ff6b6b;}
+  .add-btn{
+    width:100%;padding:9px;border-radius:8px;border:1px dashed var(--card-border);background:none;
+    color:var(--muted);cursor:pointer;font-size:13px;margin-top:6px;
+  }
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .admin-actions{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+  .admin-actions .row{display:flex;gap:10px;}
+  .admin-actions button, .admin-actions label.filebtn{
+    flex:1;text-align:center;padding:11px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;border:1px solid var(--card-border);
+  }
+  #saveBtn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;}
+  #resetBtn, #exportBtn, .filebtn{background:var(--card);color:var(--text);}
+  #resetBtn:hover{border-color:#ff6b6b;color:#ff6b6b;}
+  #exportBtn:hover, .filebtn:hover{border-color:var(--accent);color:var(--accent);}
+  #importInput{display:none;}
+  .save-toast{
+    position:fixed;bottom:26px;left:26px;background:var(--accent);color:#fff;
+    padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:400;
+    box-shadow:0 8px 24px rgba(255,106,19,0.35);
+    opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;
+  }
+  .save-toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="page-gradient"></div>
+
+<div class="wrap">
+
+  <nav class="topbar">
+    <div class="brand"><span class="elsevier-logo">Elsevier</span><span class="brand-sep"></span><span id="brandName">GTM Navigation – Health</span></div>
+    <div class="navlinks">
+      <a href="#overview">Overview</a>
+      <a href="#process">Process</a>
+      <a href="#tat">Turnaround</a>
+      <a href="#resources">Resources</a>
+    </div>
+    <button class="admin-btn" id="openAdminTop">⚙ Customize</button>
+  </nav>
+
+  <div class="hero">
+    <div class="eyebrow">Health · Back-Office Onboarding</div>
+    <h1 id="heroTitle">GTM Navigation – Health</h1>
+    <p class="sub" id="heroSubtitle">Ensuring back-office systems are properly set up to sell, invoice, entitle, and recognize revenue for a product or package.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" id="ctaOnboard" href="#" target="_blank" rel="noopener">Start Onboarding →</a>
+      <a class="btn btn-ghost" href="#process">View the Process</a>
+    </div>
+    <div class="stats" id="statsRow"></div>
+  </div>
+
+  <section id="overview">
+    <div class="section-head">
+      <div class="tag">Overview</div>
+      <h2>What this process is — and who runs it</h2>
+    </div>
+    <div class="grid2">
+      <div class="infocard">
+        <div class="icon">🧭</div>
+        <h3>What is GTM Navigation – Health?</h3>
+        <p id="whatIsText"></p>
+      </div>
+      <div class="infocard">
+        <div class="icon">🤝</div>
+        <h3>Who is the GTM Navigator?</h3>
+        <p id="whoIsText"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="section-head">
+      <div class="tag">Process</div>
+      <h2>Steps to initiate GTM Navigation</h2>
+      <p>Drag, click, or use the arrows to move through each stage.</p>
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel-stage" id="carStage">
+        <div class="carousel-ring" id="carRing"></div>
+      </div>
+      <div class="car-controls">
+        <button class="car-btn" id="carPrev">‹</button>
+        <div class="car-dots" id="carDots"></div>
+        <button class="car-btn" id="carNext">›</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="tat">
+    <div class="section-head">
+      <div class="tag">Back office setup</div>
+      <h2>Typical turnaround times (TAT)</h2>
+      <p>Once GTMN is initiated, here's how long each back-office system typically takes to configure.</p>
+    </div>
+    <div class="tat-card">
+      <table class="tat" id="tatTable">
+        <thead><tr><th>System</th><th>Turnaround Time</th></tr></thead>
+        <tbody id="tatBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="resources">
+    <div class="section-head">
+      <div class="tag">Resources</div>
+      <h2>Links &amp; documentation</h2>
+      <p>Everything you need to kick off and track a GTM Navigation request.</p>
+    </div>
+    <div class="links-grid" id="linksGrid"></div>
+  </section>
+
+  <footer>
+    <div><span style="font-family:Georgia,'Times New Roman',serif;font-weight:800;color:var(--accent);">Elsevier</span> · GTM Navigation – Health · Internal resource hub</div>
+    <div style="margin-top:6px;">Click ⚙ Customize to edit this page's content, steps, and links.</div>
+  </footer>
+</div>
+
+<button class="gear-fab" id="gearFab" title="Customize this site">⚙</button>
+
+<div class="admin-overlay" id="adminOverlay"></div>
+<div class="admin-panel" id="adminPanel">
+  <button class="admin-close" id="adminClose">✕</button>
+  <h2>Customize Site</h2>
+  <div class="desc">Changes save to this browser. Use Export to back up or share your setup.</div>
+
+  <div class="admin-section">
+    <label class="title">Header &amp; Hero</label>
+    <div class="field"><label>Brand name</label><input id="f_brand" /></div>
+    <div class="field"><label>Hero title</label><input id="f_heroTitle" /></div>
+    <div class="field"><label>Hero subtitle</label><textarea id="f_heroSubtitle" rows="3"></textarea></div>
+  </div>
+
+  <div class="admin-section">
+    <label class="title">What is GTMN-Health?</label>
+    <div class="field"><textarea id="f_whatIs" rows="4"></textarea></div>
+  </div>
+
+  <div class="admin-section">
+    <label class="title">Who is the GTM Navigator?</label>
+    <div class="field"><textarea id="f_whoIs" rows="4"></textarea></div>
+  </div>
+
+  <div class="admin-section">
+    <label class="title">Process Steps</label>
+    <div id="stepsEditor"></div>
+    <button class="add-btn" id="addStep">+ Add step</button>
+  </div>
+
+  <div class="admin-section">
+    <label class="title">Turnaround Times</label>
+    <div id="tatEditor"></div>
+    <button class="add-btn" id="addTat">+ Add row</button>
+  </div>
+
+  <div class="admin-section">
+    <label class="title">Resource Links</label>
+    <div id="linksEditor"></div>
+    <button class="add-btn" id="addLink">+ Add link</button>
+  </div>
+
+  <div class="admin-actions">
+    <button id="saveBtn">Save &amp; Apply Changes</button>
+    <div class="row">
+      <button id="exportBtn">⭳ Export</button>
+      <label class="filebtn" for="importInput">⭱ Import</label>
+      <input type="file" id="importInput" accept="application/json" />
+    </div>
+    <button id="resetBtn">Reset to Default Content</button>
+  </div>
+</div>
+
+<div class="save-toast" id="saveToast">Saved ✓</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =========================================================
+   DEFAULT CONTENT
+========================================================= */
+const DEFAULT_DATA = {
+  brand: "GTM Navigation – Health",
+  heroTitle: "GTM Navigation – Health",
+  heroSubtitle: "Ensuring back-office systems are properly set up to sell, invoice, entitle, and recognize revenue for a product or package.",
+  whatIs: "Go To Market Navigation is the process invoked to ensure back-office systems are properly set up to sell, invoice, entitle, and recognize revenue for a product or package.",
+  whoIs: "The GTM Navigator consults on qualifying business rules, coordinates back-office system setup, and manages end-to-end testing.",
+  steps: [
+    { icon:"📝", title:"Request Submission", desc:"Commercial / Product lead submits a questionnaire." },
+    { icon:"🤝", title:"Discovery Meeting", desc:"Gain understanding of the request and provide a GTM onboarding overview." },
+    { icon:"📋", title:"Business Rules Defined", desc:"Submit appropriate forms for product code builds on all systems. Create timeline and GTMN task list on JIRA." },
+    { icon:"🚀", title:"Initiate GTMN", desc:"Raise JIRA ticket for applicable systems setup. Navigator schedules recurring calls with relevant stakeholders." },
+    { icon:"🏥", title:"Back office setup", desc:"Back-office systems are configured and tested end-to-end. See turnaround times below." }
+  ],
+  tat: [
+    { system:"Entitlement System Setup", time:"1–2 Weeks" },
+    { system:"Salesforce (Including CPQ)", time:"4 Weeks" },
+    { system:"Siebel CRM", time:"1–2 Weeks" },
+    { system:"Revenue Engine / Oracle Table Setup", time:"1–2 Weeks" }
+  ],
+  links: [
+    { icon:"📝", label:"GTMN – Health Onboarding Form", desc:"Fill out the form to kick off a new GTMN request.", url:"https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=P-50kiWUCUGif5-xXBBnXeLhiUbUijRAiCThU6dJVv5UQkJPUERKUkNXQVVNRTJSSVFFWElST1NDUy4u" },
+    { icon:"🗂️", label:"GTMN – Health SharePoint", desc:"All documents, templates, and process artifacts.", url:"https://reedelsevier.sharepoint.com/sites/GoToMarketNavigationHealth/Shared%20Documents/Forms/AllItems.aspx?viewid=e33715d6%2Da096%2D4ab0%2Dbc53%2De6fced0b4be7" },
+    { icon:"📌", label:"GTMN – Health Kanban Board (Jira)", desc:"Track live tickets and task status.", url:"https://elsevier.atlassian.net/jira/software/c/projects/GTMNH/boards/29796?assignee=unassigned" },
+    { icon:"📘", label:"GTMN – Health Confluence Page", desc:"Process documentation and knowledge base.", url:"https://elsevier.atlassian.net/wiki/spaces/GTMN/overview?homepageId=119602018748112" }
+  ]
+};
+
+const STORAGE_KEY = "gtmnHealthSiteData_v1";
+let siteData = loadData();
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData)); }
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =========================================================
+   RENDER: PUBLIC SITE
+========================================================= */
+function renderAll(){
+  document.getElementById('brandName').textContent = siteData.brand;
+  document.title = siteData.brand;
+  document.getElementById('heroTitle').textContent = siteData.heroTitle;
+  document.getElementById('heroSubtitle').textContent = siteData.heroSubtitle;
+  document.getElementById('whatIsText').textContent = siteData.whatIs;
+  document.getElementById('whoIsText').textContent = siteData.whoIs;
+
+  const onboard = siteData.links[0];
+  const ctaBtn = document.getElementById('ctaOnboard');
+  if(onboard){ ctaBtn.href = onboard.url; ctaBtn.style.display=''; }
+  else { ctaBtn.style.display='none'; }
+
+  renderStats();
+  renderCarousel();
+  renderTat();
+  renderLinks();
+}
+
+function renderStats(){
+  const times = siteData.tat.map(r => r.time);
+  const maxTime = times.sort((a,b)=> b.length-a.length)[0] || "—";
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="num">${siteData.steps.length}</div><div class="lbl">Process Steps</div></div>
+    <div class="stat"><div class="num">${siteData.tat.length}</div><div class="lbl">Back-Office Systems</div></div>
+    <div class="stat"><div class="num">${siteData.links.length}</div><div class="lbl">Linked Resources</div></div>
+  `;
+}
+
+/* ---- Carousel ---- */
+let carIndex = 0;
+function renderCarousel(){
+  const ring = document.getElementById('carRing');
+  const dots = document.getElementById('carDots');
+  const steps = siteData.steps;
+  const n = Math.max(steps.length,1);
+  const angleStep = 360/n;
+  const radius = Math.round(280 / (2*Math.tan(Math.PI/n))) + 40;
+
+  ring.innerHTML = steps.map((s,i)=>`
+    <div class="step-card" data-i="${i}" style="transform: rotateY(${i*angleStep}deg) translateZ(${radius}px);">
+      <div class="num">Step ${i+1} / ${n}</div>
+      <div class="icon">${esc(s.icon||"⭐")}</div>
+      <h4>${esc(s.title)}</h4>
+      <p>${esc(s.desc)}</p>
+    </div>
+  `).join('');
+
+  dots.innerHTML = steps.map((_,i)=>`<div class="dot" data-i="${i}"></div>`).join('');
+
+  ring.querySelectorAll('.step-card').forEach(card=>{
+    card.addEventListener('click', ()=> goTo(parseInt(card.dataset.i)));
+  });
+  dots.querySelectorAll('.dot').forEach(d=>{
+    d.addEventListener('click', ()=> goTo(parseInt(d.dataset.i)));
+  });
+
+  window._carAngleStep = angleStep;
+  if(carIndex >= n) carIndex = 0;
+  updateCarousel();
+}
+function updateCarousel(){
+  const ring = document.getElementById('carRing');
+  const angleStep = window._carAngleStep || 0;
+  ring.style.transform = `rotateY(${-carIndex*angleStep}deg)`;
+  document.querySelectorAll('.step-card').forEach(c=>{
+    c.classList.toggle('active', parseInt(c.dataset.i)===carIndex);
+  });
+  document.querySelectorAll('.dot').forEach(d=>{
+    d.classList.toggle('active', parseInt(d.dataset.i)===carIndex);
+  });
+}
+function goTo(i){
+  const n = siteData.steps.length;
+  if(n===0) return;
+  carIndex = ((i % n) + n) % n;
+  updateCarousel();
+}
+
+document.getElementById('carPrev').addEventListener('click', ()=> goTo(carIndex-1));
+document.getElementById('carNext').addEventListener('click', ()=> goTo(carIndex+1));
+
+/* drag to rotate */
+(function(){
+  const stage = document.getElementById('carStage');
+  let dragging=false, startX=0, moved=0;
+  stage.addEventListener('pointerdown', e=>{ dragging=true; startX=e.clientX; moved=0; stage.setPointerCapture(e.pointerId); });
+  stage.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    moved = e.clientX - startX;
+  });
+  stage.addEventListener('pointerup', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    if(Math.abs(moved) > 60){ goTo(carIndex + (moved<0?1:-1)); }
+  });
+  stage.addEventListener('keydown', ()=>{});
+})();
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') goTo(carIndex-1);
+  if(e.key==='ArrowRight') goTo(carIndex+1);
+});
+
+/* ---- TAT table ---- */
+function renderTat(){
+  document.getElementById('tatBody').innerHTML = siteData.tat.map(r=>`
+    <tr><td>${esc(r.system)}</td><td class="time"><span>${esc(r.time)}</span></td></tr>
+  `).join('');
+}
+
+/* ---- Links ---- */
+function renderLinks(){
+  const grid = document.getElementById('linksGrid');
+  grid.innerHTML = siteData.links.map(l=>`
+    <a class="link-card" href="${esc(l.url)}" target="_blank" rel="noopener">
+      <div class="row">
+        <div class="emoji">${esc(l.icon||"🔗")}</div>
+        <div>
+          <h4>${esc(l.label)}</h4>
+          <p>${esc(l.desc||"")}</p>
+        </div>
+        <div class="arrow">↗</div>
+      </div>
+    </a>
+  `).join('');
+
+  grid.querySelectorAll('.link-card').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - 0.5;
+      const y = (e.clientY - r.top)/r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-2px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{ card.style.transform=''; });
+  });
+}
+
+/* =========================================================
+   ADMIN PANEL
+========================================================= */
+const adminOverlay = document.getElementById('adminOverlay');
+const adminPanel = document.getElementById('adminPanel');
+function openAdmin(){
+  fillAdminForm();
+  adminOverlay.classList.add('open');
+  adminPanel.classList.add('open');
+}
+function closeAdmin(){
+  adminOverlay.classList.remove('open');
+  adminPanel.classList.remove('open');
+}
+document.getElementById('gearFab').addEventListener('click', openAdmin);
+document.getElementById('openAdminTop').addEventListener('click', openAdmin);
+document.getElementById('adminClose').addEventListener('click', closeAdmin);
+adminOverlay.addEventListener('click', closeAdmin);
+
+let draft; // working copy edited in the panel
+
+function fillAdminForm(){
+  draft = JSON.parse(JSON.stringify(siteData));
+  document.getElementById('f_brand').value = draft.brand;
+  document.getElementById('f_heroTitle').value = draft.heroTitle;
+  document.getElementById('f_heroSubtitle').value = draft.heroSubtitle;
+  document.getElementById('f_whatIs').value = draft.whatIs;
+  document.getElementById('f_whoIs').value = draft.whoIs;
+  renderStepsEditor();
+  renderTatEditor();
+  renderLinksEditor();
+}
+
+function renderStepsEditor(){
+  const el = document.getElementById('stepsEditor');
+  el.innerHTML = draft.steps.map((s,i)=>`
+    <div class="list-item" data-i="${i}">
+      <button class="rm" data-list="steps" data-i="${i}">✕</button>
+      <div class="field"><label>Icon (emoji)</label><input data-list="steps" data-i="${i}" data-k="icon" value="${esc(s.icon)}"></div>
+      <div class="field"><label>Title</label><input data-list="steps" data-i="${i}" data-k="title" value="${esc(s.title)}"></div>
+      <div class="field"><label>Description</label><textarea rows="2" data-list="steps" data-i="${i}" data-k="desc">${esc(s.desc)}</textarea></div>
+    </div>
+  `).join('');
+  bindListInputs(el);
+}
+function renderTatEditor(){
+  const el = document.getElementById('tatEditor');
+  el.innerHTML = draft.tat.map((r,i)=>`
+    <div class="list-item" data-i="${i}">
+      <button class="rm" data-list="tat" data-i="${i}">✕</button>
+      <div class="field"><label>System</label><input data-list="tat" data-i="${i}" data-k="system" value="${esc(r.system)}"></div>
+      <div class="field"><label>Turnaround Time</label><input data-list="tat" data-i="${i}" data-k="time" value="${esc(r.time)}"></div>
+    </div>
+  `).join('');
+  bindListInputs(el);
+}
+function renderLinksEditor(){
+  const el = document.getElementById('linksEditor');
+  el.innerHTML = draft.links.map((l,i)=>`
+    <div class="list-item" data-i="${i}">
+      <button class="rm" data-list="links" data-i="${i}">✕</button>
+      <div class="field"><label>Icon (emoji)</label><input data-list="links" data-i="${i}" data-k="icon" value="${esc(l.icon)}"></div>
+      <div class="field"><label>Label</label><input data-list="links" data-i="${i}" data-k="label" value="${esc(l.label)}"></div>
+      <div class="field"><label>Description</label><input data-list="links" data-i="${i}" data-k="desc" value="${esc(l.desc)}"></div>
+      <div class="field"><label>URL</label><input data-list="links" data-i="${i}" data-k="url" value="${esc(l.url)}"></div>
+    </div>
+  `).join('');
+  bindListInputs(el);
+}
+function bindListInputs(container){
+  container.querySelectorAll('input[data-k], textarea[data-k]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const list = inp.dataset.list, i = parseInt(inp.dataset.i), k = inp.dataset.k;
+      draft[list][i][k] = inp.value;
+    });
+  });
+  container.querySelectorAll('button.rm').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const list = btn.dataset.list, i = parseInt(btn.dataset.i);
+      draft[list].splice(i,1);
+      if(list==='steps') renderStepsEditor();
+      if(list==='tat') renderTatEditor();
+      if(list==='links') renderLinksEditor();
+    });
+  });
+}
+
+document.getElementById('addStep').addEventListener('click', ()=>{
+  draft.steps.push({icon:"⭐", title:"New Step", desc:"Describe this step."});
+  renderStepsEditor();
+});
+document.getElementById('addTat').addEventListener('click', ()=>{
+  draft.tat.push({system:"New System", time:"1 Week"});
+  renderTatEditor();
+});
+document.getElementById('addLink').addEventListener('click', ()=>{
+  draft.links.push({icon:"🔗", label:"New Link", desc:"", url:"https://"});
+  renderLinksEditor();
+});
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  draft.brand = document.getElementById('f_brand').value || DEFAULT_DATA.brand;
+  draft.heroTitle = document.getElementById('f_heroTitle').value;
+  draft.heroSubtitle = document.getElementById('f_heroSubtitle').value;
+  draft.whatIs = document.getElementById('f_whatIs').value;
+  draft.whoIs = document.getElementById('f_whoIs').value;
+  siteData = JSON.parse(JSON.stringify(draft));
+  persist();
+  renderAll();
+  showToast('Saved ✓');
+  closeAdmin();
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('Reset all content back to the original defaults? This cannot be undone.')) return;
+  siteData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  persist();
+  renderAll();
+  fillAdminForm();
+  showToast('Reset to defaults');
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(siteData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gtmn-health-content.json';
+  a.click();
+});
+document.getElementById('importInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      siteData = parsed;
+      persist();
+      renderAll();
+      fillAdminForm();
+      showToast('Imported ✓');
+    }catch(err){
+      alert('Could not read that file — please choose a valid exported JSON file.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function showToast(msg){
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   THREE.JS AMBIENT 3D BACKGROUND
+========================================================= */
+(function initBackground(){
+  if(typeof THREE === 'undefined') return;
+  const canvas = document.getElementById('bgCanvas');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 60;
+
+  // particle field
+  const particleCount = 260;
+  const positions = new Float32Array(particleCount*3);
+  for(let i=0;i<particleCount;i++){
+    positions[i*3] = (Math.random()-0.5)*220;
+    positions[i*3+1] = (Math.random()-0.5)*140;
+    positions[i*3+2] = (Math.random()-0.5)*160;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  const pMat = new THREE.PointsMaterial({color:0xff6a13, size:1.4, transparent:true, opacity:0.65});
+  const points = new THREE.Points(pGeo, pMat);
+  scene.add(points);
+
+  // floating wireframe shapes
+  const shapes = [];
+  const geos = [
+    new THREE.IcosahedronGeometry(9,0),
+    new THREE.TorusGeometry(7,1.6,8,24),
+    new THREE.OctahedronGeometry(8,0)
+  ];
+  for(let i=0;i<geos.length;i++){
+    const mat = new THREE.MeshBasicMaterial({color: i%2===0?0xff6a13:0xffab6b, wireframe:true, transparent:true, opacity:0.4});
+    const mesh = new THREE.Mesh(geos[i], mat);
+    mesh.position.set((Math.random()-0.5)*90, (Math.random()-0.5)*60, (Math.random()-0.5)*60-20);
+    scene.add(mesh);
+    shapes.push(mesh);
+  }
+
+  let mouseX=0, mouseY=0;
+  window.addEventListener('mousemove', e=>{
+    mouseX = (e.clientX/window.innerWidth - 0.5);
+    mouseY = (e.clientY/window.innerHeight - 0.5);
+  });
+  window.addEventListener('resize', ()=>{
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    points.rotation.y += 0.0007;
+    points.rotation.x += 0.0002;
+    shapes.forEach((m,i)=>{
+      m.rotation.x += 0.0025 + i*0.0004;
+      m.rotation.y += 0.0032 + i*0.0003;
+    });
+    camera.position.x += (mouseX*14 - camera.position.x)*0.02;
+    camera.position.y += (-mouseY*10 - camera.position.y)*0.02;
+    camera.lookAt(0,0,0);
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+/* =========================================================
+   INIT
+========================================================= */
+renderAll();
+</script>
+</body>
+</html>
